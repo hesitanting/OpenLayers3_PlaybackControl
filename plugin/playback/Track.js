@@ -1,9 +1,7 @@
 ol.Playback = ol.Playback || {};
-
-
-
 ol.Playback.Track = function(geoJSON, options) {
     this.options = options || {};
+    this.popup=options.popup;
     var tickLen = options.tickLen || 250;
     this._staleTime = options.staleTime || 60 * 60 * 1000;
     this._fadeMarkersWhenStale = options.fadeMarkersWhenStale || false;
@@ -12,6 +10,7 @@ ol.Playback.Track = function(geoJSON, options) {
     this._ticks = [];
     this._marker = null;
     this._orientations = [];
+    this.currentPosition;
     var sampleTimes = geoJSON.properties.time;
     this._orientIcon = options.orientIcons;
     var previousOrientation;
@@ -258,7 +257,8 @@ ol.Playback.Track.prototype.setMarker = function(timestamp, options){
     }
 
     if (lngLat) {
-        //lngLat=ol.proj.fromLonLat(lngLat);
+        this.currentPosition=ol.proj.fromLonLat(lngLat);
+        console.log(this.currentPosition);
         var element = document.createElement('div');
         element.className = 'GPSMarker';
         this._marker = new ol.Overlay({
@@ -267,12 +267,18 @@ ol.Playback.Track.prototype.setMarker = function(timestamp, options){
             stopEvent:false,
             positioning: 'bottom-center'
         });
-        //map.addOverlay(overlay);
+        var self=this;
         if(options.mouseOverCallback) {
-            element.addEventListener('mouseover',options.mouseOverCallback);
+            element.addEventListener('mouseover',function(e){
+                options.mouseOverCallback(lngLat);
+            });
         }
         if(options.clickCallback) {
-            element.addEventListener('click',options.clickCallback);
+            element.addEventListener('click',function(e){
+                self.showPopup=true;
+                self.popup.popup.setPosition(self.currentPosition);
+                options.clickCallback();
+            });
         }
     }
 
@@ -282,7 +288,11 @@ ol.Playback.Track.prototype.setMarker = function(timestamp, options){
 ol.Playback.Track.prototype.moveMarker = function(latLng, transitionTime,timestamp) {
     if (this._marker) {
         latLng=ol.proj.fromLonLat(latLng);
+        this.currentPosition=latLng;
         this._marker.setPosition(latLng);
+        //添加popup说明
+        if(this.showPopup)
+            this.popup.popup.setPosition(this.currentPosition);
     }
 };
 

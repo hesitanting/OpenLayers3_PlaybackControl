@@ -10,6 +10,7 @@
     <link href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" rel="stylesheet" type="text/css" />
     <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
     <link href="playback.css" rel="stylesheet" type="text/css" />
+    <link href="dist/bundle.css" rel="stylesheet" type="text/css" />
 
     <style>
         #title_container {
@@ -37,7 +38,8 @@
     <h1>OpenLayers3轨迹播放控件展示</h1>
 </div>
 
-<div id="map"></div>
+<div id="map">
+</div>
 
 <script src="http://code.jquery.com/jquery-1.11.0.js"></script>
 <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.min.js"></script>
@@ -46,9 +48,9 @@
 <script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
 <script src="http://jdewit.github.io/bootstrap-timepicker/js/bootstrap-timepicker.js"></script>
 
-
-
+<script src='dist/bundle.js'></script>
 <script src="plugin/playback/Clock.js"></script>
+<script src="plugin/playback/Popup.js"></script>
 <script src="plugin/playback/Control.js"></script>
 <script src="plugin/playback/Playback.js"></script>
 <script src="plugin/playback/Track.js"></script>

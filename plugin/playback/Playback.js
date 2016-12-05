@@ -8,10 +8,11 @@ ol.Playback = function (map, geoJSON, callback, options) {
         tracksLayer: true,
         playControl: false,
         dateControl: false,
-        sliderControl: false
+        sliderControl: false,
+        popup:options.popup,
         // options
-        //mouseOverCallback: fun,
-        //clickCallback:fun
+        mouseOverCallback: options.mouseOverCallback,
+        clickCallback:options.clickCallback
     };
     this._trackController = new ol.Playback.TrackController(map, null, this.options);
     Clock.call(this,this._trackController,callback,this.options);
@@ -79,8 +80,6 @@ ol.Playback.prototype.addData = function (geoJSON, ms) {
             this._trackController.addTrack(new ol.Playback.Track(geoJSON, this.options), ms);
         }
     }
-
-    //this._map.fire('playback:set:data');
 
     if (this.options.tracksLayer) {
         var geojsonformat=new ol.format.GeoJSON();
