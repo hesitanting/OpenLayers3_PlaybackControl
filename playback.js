@@ -45,18 +45,7 @@ function init(){
 
     // Add data
     //playback.addData(blueMountain);
-    var popup=new PoPup();
-    map.addOverlay(popup.popup);
-    var playback=new ol.Playback(map, demoTracks,null, {
-        popup:popup,
-        mouseOverCallback:function(e){
-            console.log('我被鼠标滑过了');
-        },
-        clickCallback:function(coor){
-            console.log('我被点击了');
-            //showPopup(coor);
-        }
-    });
+    var playback=new ol.Playback(map, demoTracks,null);
     var control=new Example2_Control({
         playback:playback
     });
@@ -64,25 +53,6 @@ function init(){
     control.Setup();//注册dom事件
        
 };
-
-
-
-
-
-
-function showPopup(coor){
-    popup.content.innerHTML = '<h3>GPS消息</h3>'+
-        '<p>测试使用</p>';
-    popup.popup.setPosition(coor);
-}
-function closePopup(){
-    popup.popup.setPosition(undefined);
-    popup.popupCloseElement.blur();
-    return false;
-}
-
-
-
 //判断当前图层是否存在地图中
 function hasLayerInMap(layer){
     var layers=map.getLayers();

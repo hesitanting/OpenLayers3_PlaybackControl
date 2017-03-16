@@ -13,12 +13,14 @@ ol.Playback.TrackController = function (map, tracks, options) {
 ol.Playback.TrackController.prototype.clearTracks=function() {
     while (this._tracks.length > 0) {
         var track = this._tracks.pop();
-        var marker = track.getMarker();
+        /*var marker = track.getMarker();
 
         if (marker) {
-            this._map.removeOverlay(marker);
-        }
+            //this._map.removeOverlay(marker);
+            markerSource.removeFeature(marker);
+        }*/
     }
+    markerSource.clear();
 }
 
 ol.Playback.TrackController.prototype.setTracks = function (tracks) {
@@ -53,7 +55,7 @@ ol.Playback.TrackController.prototype.addTrack = function (track, timestamp) {
     var marker = track.setMarker(timestamp, this.options);
 
     if (marker) {
-        this._map.addOverlay(marker);
+        //this._map.addOverlay(marker);
         this._tracks.push(track);
     }
 }

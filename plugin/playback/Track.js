@@ -1,7 +1,9 @@
 ol.Playback = ol.Playback || {};
+
+
+
 ol.Playback.Track = function(geoJSON, options) {
     this.options = options || {};
-    this.popup=options.popup;
     var tickLen = options.tickLen || 250;
     this._staleTime = options.staleTime || 60 * 60 * 1000;
     this._fadeMarkersWhenStale = options.fadeMarkersWhenStale || false;
@@ -10,7 +12,6 @@ ol.Playback.Track = function(geoJSON, options) {
     this._ticks = [];
     this._marker = null;
     this._orientations = [];
-    this.currentPosition;
     var sampleTimes = geoJSON.properties.time;
     this._orientIcon = options.orientIcons;
     var previousOrientation;
@@ -124,6 +125,10 @@ ol.Playback.Track = function(geoJSON, options) {
 
 ol.Playback.Track.prototype._interpolatePoint = function (start, end, ratio) {
     try {
+        if(end[0]-start[0]>180)//比如从-179到179
+            end[0]-=360;
+        else if(end[0]-start[0]<-180)//比如从179到-179
+            end[0]+=360;
         var delta = [end[0] - start[0], end[1] - start[1]];
         var offset = [delta[0] * ratio, delta[1] * ratio];
         return [start[0] + offset[0], start[1] + offset[1]];
@@ -247,19 +252,19 @@ ol.Playback.Track.prototype.courseAtTime= function(timestamp)
 
 ol.Playback.Track.prototype.setMarker = function(timestamp, options){
     var lngLat = null;
-
+    var heading=null;
     // if time stamp is not set, then get first tick
     if (timestamp) {
         lngLat = this.tick(timestamp);
+        heading=this.courseAtTime(timestamp);
     }
     else {
         lngLat = this.getFirstTick();
+        heading=this.courseAtTime(this._startTime);
     }
-
     if (lngLat) {
-        this.currentPosition=ol.proj.fromLonLat(lngLat);
-        console.log(this.currentPosition);
-        var element = document.createElement('div');
+        lngLat=ol.proj.fromLonLat(lngLat);
+        /*var element = document.createElement('div');
         element.className = 'GPSMarker';
         this._marker = new ol.Overlay({
             id:this.uuid(),
@@ -267,32 +272,30 @@ ol.Playback.Track.prototype.setMarker = function(timestamp, options){
             stopEvent:false,
             positioning: 'bottom-center'
         });
-        var self=this;
+        //map.addOverlay(overlay);
         if(options.mouseOverCallback) {
-            element.addEventListener('mouseover',function(e){
-                options.mouseOverCallback(lngLat);
-            });
+            element.addEventListener('mouseover',options.mouseOverCallback);
         }
         if(options.clickCallback) {
-            element.addEventListener('click',function(e){
-                self.showPopup=true;
-                self.popup.popup.setPosition(self.currentPosition);
-                options.clickCallback();
-            });
-        }
+            element.addEventListener('click',options.clickCallback);
+        }*/
+        this._marker=new ol.Feature({
+            heading:heading,
+            geometry: new ol.geom.Point(lngLat)
+        });
+        markerSource.addFeature(this._marker);
     }
 
     return this._marker;
 };
 
 ol.Playback.Track.prototype.moveMarker = function(latLng, transitionTime,timestamp) {
+    var heading=this.courseAtTime(timestamp);
     if (this._marker) {
         latLng=ol.proj.fromLonLat(latLng);
-        this.currentPosition=latLng;
-        this._marker.setPosition(latLng);
-        //添加popup说明
-        if(this.showPopup)
-            this.popup.popup.setPosition(this.currentPosition);
+        //this._marker.setPosition(latLng);
+        this._marker.set('heading',heading);
+        this._marker.setGeometry(new ol.geom.Point(latLng));
     }
 };
 

@@ -22,3 +22,7 @@ function PoPup(options) {
         return false;
     }
 }
+PoPup.prototype.show=function(coor,content){
+    this.content.innerHTML = content;
+    this.popup.setPosition(coor);
+}

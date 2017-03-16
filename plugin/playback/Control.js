@@ -1,5 +1,4 @@
 
-
 DateControl = function(opt_options) {
     this.options= {
         position : 'bottomleft',

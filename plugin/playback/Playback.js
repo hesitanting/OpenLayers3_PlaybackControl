@@ -8,11 +8,10 @@ ol.Playback = function (map, geoJSON, callback, options) {
         tracksLayer: true,
         playControl: false,
         dateControl: false,
-        sliderControl: false,
-        popup:options.popup,
+        sliderControl: false
         // options
-        mouseOverCallback: options.mouseOverCallback,
-        clickCallback:options.clickCallback
+        //mouseOverCallback: fun,
+        //clickCallback:fun
     };
     this._trackController = new ol.Playback.TrackController(map, null, this.options);
     Clock.call(this,this._trackController,callback,this.options);
@@ -81,6 +80,8 @@ ol.Playback.prototype.addData = function (geoJSON, ms) {
         }
     }
 
+    //this._map.fire('playback:set:data');
+
     if (this.options.tracksLayer) {
         var geojsonformat=new ol.format.GeoJSON();
         var geojsonRoot = {
@@ -91,11 +92,30 @@ ol.Playback.prototype.addData = function (geoJSON, ms) {
         //4326要转3857
         features.forEach(function(feature,index){
             feature.setGeometry(feature.getGeometry().transform('EPSG:4326','EPSG:3857'));
+            var options=feature.get('path_options');
+            var color;
+            if(options!==undefined&&options.color!==undefined)
+            {
+                color=options.color;
+                var style=new ol.style.Style({
+                    image: new ol.style.Circle({
+                        radius: 5,
+                        fill: new ol.style.Fill({
+                            color: color
+                        })
+                    })
+                });
+                feature.setStyle(style);
+            }
         });
+
         TracksLayer.getSource().addFeatures(features);
         this._tracksLayer=TracksLayer;
         if(!hasLayerInMap(TracksLayer))
             this._map.addLayer(TracksLayer);
+        if(!hasLayerInMap(MarkerLayer))
+            this._map.addLayer(MarkerLayer);
+
     }
 };
 
@@ -110,5 +130,8 @@ ol.Playback.prototype.destroy= function() {
     if (this.dateControl) {
         this._map.removeControl(this.dateControl);
     }
-    this._map.removeLayer(this._tracksLayer);
+    if(hasLayerInMap(TracksLayer))
+        this._map.removeLayer(TracksLayer);
+    if(hasLayerInMap(MarkerLayer))
+        this._map.removeLayer(MarkerLayer);
 }
