@@ -91,3 +91,4 @@ ol.Playback.TrackController.prototype.getEndTime = function () {
 ol.Playback.TrackController.prototype.getTracks = function () {
     return this._tracks;
 };
+

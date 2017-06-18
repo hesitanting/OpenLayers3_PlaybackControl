@@ -43,7 +43,7 @@ function init(){
     // =============== Playback ============================
     // =====================================================
     var playback=new ol.Playback(map, demoTracks,null);
-    var control=new Example2_Control({
+    var control=new PlayBackControl({
         playback:playback
     });
     map.addControl(control);

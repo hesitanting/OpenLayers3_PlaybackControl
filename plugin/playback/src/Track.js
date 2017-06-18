@@ -312,8 +312,6 @@ ol.Playback.Track.prototype.moveMarker = function(latLng, transitionTime,timesta
             var content=`<p>经纬度：${coor1[0].toFixed(4)} ${coor1[1].toFixed(4)}</p></br>
             <p>角度：${feature.get('heading').toFixed(4)}</p></br>
             <p>时间：${new Date(parseInt(feature.get('time'))).toLocaleString().replace(/:\d{1,2}$/,' ')}</p>`;
-            //trackpopup.show(feature.getId(),coor,content);
-            //showTrack(coor,content);
             this._trackLayer.getPopup().move(feature.getId(),coor,content);
         }
     }

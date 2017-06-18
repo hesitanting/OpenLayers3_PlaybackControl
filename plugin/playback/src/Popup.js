@@ -36,7 +36,6 @@ ol.Playback.PoPup.prototype.show=function(id,coor,content){
     this.popup.setPosition(coor);
 }
 ol.Playback.PoPup.prototype.move=function(id,coor,content){
-    //console.log(id,this._trackid);
     if(id!=this._trackid)
         return;
     this.content.innerHTML = content;
