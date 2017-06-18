@@ -1,4 +1,4 @@
-
+ol.Playback = ol.Playback || {};
 Clock = function(trackController, callback, options) {
   if(trackController){
     this._trackController = trackController;

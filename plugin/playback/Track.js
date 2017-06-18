@@ -1,18 +1,22 @@
-ol.Playback = ol.Playback || {};
-
-
-
 ol.Playback.Track = function(geoJSON, options) {
     this.options = options || {};
     var tickLen = options.tickLen || 250;
     this._staleTime = options.staleTime || 60 * 60 * 1000;
     this._fadeMarkersWhenStale = options.fadeMarkersWhenStale || false;
+    this._trackLayer=options.trackLayer;
+    this.trackline;//播放的轨迹线
+    this.firstCoor;//轨迹线初始化点
     this._geoJSON = geoJSON;
     this._tickLen = tickLen;
     this._ticks = [];
     this._marker = null;
     this._orientations = [];
     var sampleTimes = geoJSON.properties.time;
+    this._ship_name=geoJSON.properties.ship_name;//船舶名称
+    this.ship_id=geoJSON.properties.ship_id;//船舶id
+    if(geoJSON.properties.path_options!==undefined)
+        this._color=geoJSON.properties.path_options.color;
+    console.log(geoJSON.properties.path_options);
     this._orientIcon = options.orientIcons;
     var previousOrientation;
     var samples = geoJSON.geometry.coordinates;
@@ -253,9 +257,10 @@ ol.Playback.Track.prototype.courseAtTime= function(timestamp)
 ol.Playback.Track.prototype.setMarker = function(timestamp, options){
     var lngLat = null;
     var heading=null;
-    // if time stamp is not set, then get first tick
+    var time=null;
     if (timestamp) {
         lngLat = this.tick(timestamp);
+        time=timestamp;
         heading=this.courseAtTime(timestamp);
     }
     else {
@@ -264,38 +269,53 @@ ol.Playback.Track.prototype.setMarker = function(timestamp, options){
     }
     if (lngLat) {
         lngLat=ol.proj.fromLonLat(lngLat);
-        /*var element = document.createElement('div');
-        element.className = 'GPSMarker';
-        this._marker = new ol.Overlay({
-            id:this.uuid(),
-            element: element,
-            stopEvent:false,
-            positioning: 'bottom-center'
-        });
-        //map.addOverlay(overlay);
-        if(options.mouseOverCallback) {
-            element.addEventListener('mouseover',options.mouseOverCallback);
-        }
-        if(options.clickCallback) {
-            element.addEventListener('click',options.clickCallback);
-        }*/
+        this.firstCoor=lngLat;
         this._marker=new ol.Feature({
             heading:heading,
+            time:time,
+            ship_name:this._ship_name,
+            color:this._color,
             geometry: new ol.geom.Point(lngLat)
         });
-        markerSource.addFeature(this._marker);
+        if(this.ship_id!==undefined)
+            this._marker.setId(this.ship_id);
+        else
+            this._marker.setId(this.uuid());
     }
-
     return this._marker;
 };
 
 ol.Playback.Track.prototype.moveMarker = function(latLng, transitionTime,timestamp) {
     var heading=this.courseAtTime(timestamp);
-    if (this._marker) {
+    if (this._marker&&latLng) {
         latLng=ol.proj.fromLonLat(latLng);
-        //this._marker.setPosition(latLng);
         this._marker.set('heading',heading);
+        this._marker.set('time',timestamp);
         this._marker.setGeometry(new ol.geom.Point(latLng));
+        if(this.trackline===undefined){
+            this.trackline=new ol.Feature({ color:this._color});
+            this.trackline.setGeometry(new ol.geom.LineString([this.firstCoor,latLng]));
+            //trackSource.addFeature(this.trackline);
+            this._trackLayer.trackSource.addFeature(this.trackline);
+        }
+        else
+        {
+            this.trackline.getGeometry().appendCoordinate(latLng);
+        }
+        //popop移动
+        //获取当前地图对象中popup显示的轨迹id
+        var _trackid=this._trackLayer.getPopup().getTrackId();
+        if(this._marker.getId()==_trackid){
+            var feature=this._marker;
+            var coor=feature.getGeometry().getCoordinates();
+            var coor1=ol.proj.toLonLat(coor);
+            var content=`<p>经纬度：${coor1[0].toFixed(4)} ${coor1[1].toFixed(4)}</p></br>
+            <p>角度：${feature.get('heading').toFixed(4)}</p></br>
+            <p>时间：${new Date(parseInt(feature.get('time'))).toLocaleString().replace(/:\d{1,2}$/,' ')}</p>`;
+            //trackpopup.show(feature.getId(),coor,content);
+            //showTrack(coor,content);
+            this._trackLayer.getPopup().move(feature.getId(),coor,content);
+        }
     }
 };
 

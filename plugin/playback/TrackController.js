@@ -1,5 +1,4 @@
 ol.Playback = ol.Playback || {};
-
 ol.Playback.TrackController = function (map, tracks, options) {
     this.options = options || {};
 
@@ -13,14 +12,8 @@ ol.Playback.TrackController = function (map, tracks, options) {
 ol.Playback.TrackController.prototype.clearTracks=function() {
     while (this._tracks.length > 0) {
         var track = this._tracks.pop();
-        /*var marker = track.getMarker();
-
-        if (marker) {
-            //this._map.removeOverlay(marker);
-            markerSource.removeFeature(marker);
-        }*/
     }
-    markerSource.clear();
+    //markerSource.clear();
 }
 
 ol.Playback.TrackController.prototype.setTracks = function (tracks) {
@@ -55,7 +48,7 @@ ol.Playback.TrackController.prototype.addTrack = function (track, timestamp) {
     var marker = track.setMarker(timestamp, this.options);
 
     if (marker) {
-        //this._map.addOverlay(marker);
+        this.options.trackLayer.markerSource.addFeature(marker);
         this._tracks.push(track);
     }
 }
@@ -69,7 +62,6 @@ ol.Playback.TrackController.prototype.tock = function (timestamp, transitionTime
 
 ol.Playback.TrackController.prototype.getStartTime = function () {
     var earliestTime = 0;
-
     if (this._tracks.length > 0) {
         earliestTime = this._tracks[0].getStartTime();
         for (var i = 1, len = this._tracks.length; i < len; i++) {
@@ -79,13 +71,11 @@ ol.Playback.TrackController.prototype.getStartTime = function () {
             }
         }
     }
-
     return earliestTime;
 }
 
 ol.Playback.TrackController.prototype.getEndTime = function () {
     var latestTime = 0;
-
     if (this._tracks.length > 0) {
         latestTime = this._tracks[0].getEndTime();
         for (var i = 1, len = this._tracks.length; i < len; i++) {
@@ -95,7 +85,6 @@ ol.Playback.TrackController.prototype.getEndTime = function () {
             }
         }
     }
-
     return latestTime;
 }
 

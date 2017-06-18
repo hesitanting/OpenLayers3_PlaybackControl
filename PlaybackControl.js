@@ -73,7 +73,6 @@ var Example2_Control = function(opt_options) {
     element.appendChild(div);
 
     this._clockCallback=function(ms) {
-        console.log(ms);
         $('#cursor-date').html(ol.Playback.Util.DateStr(ms));
         $('#cursor-time').html(ol.Playback.Util.TimeStr(ms));
         $('#time-slider').slider({value:ms});

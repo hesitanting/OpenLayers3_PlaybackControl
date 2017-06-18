@@ -1,4 +1,4 @@
-
+ol.Playback = ol.Playback || {};
 ol.Playback = function (map, geoJSON, callback, options) {
     this.Util = ol.Playback.Util;
     this.options = {
@@ -13,18 +13,13 @@ ol.Playback = function (map, geoJSON, callback, options) {
         //mouseOverCallback: fun,
         //clickCallback:fun
     };
-    this._trackController = new ol.Playback.TrackController(map, null, this.options);
-    Clock.call(this,this._trackController,callback,this.options);
     this._map=map;
-
-    //轨迹图层
-    /*if (this.options.tracksLayer) {
-        //this._tracksLayer = TracksLayer;
-        //this._map.addLayer(TracksLayer);
-        //map.addLayer(this._tracksLayer);
-        this._map.addLayer(TracksLayer);
-        this._tracksLayer = TracksLayer;
-    }*/
+    this._popup=new ol.Playback.PoPup({map:map});
+    this._trackLayer=new ol.Playback.TrackLayer({map:this._map,popup:this._popup});
+    this.options.trackLayer=this._trackLayer;
+    this._trackController = new ol.Playback.TrackController(map, null, this.options);
+    this._trackLayer.createLayer();//创建地图所需对象
+    Clock.call(this,this._trackController,callback,this.options);
     this.setData(geoJSON);//设置gps数据
 
 
@@ -47,8 +42,8 @@ ol.Playback.prototype=new Clock();
 
 ol.Playback.prototype.clearData = function(){
     this._trackController.clearTracks();
-    if (this._tracksLayer)
-        this._map.removeLayer(this._tracksLayer);
+    this._trackLayer.trackSource.clear();
+    this._trackLayer.markerSource.clear();
 };
 
 ol.Playback.prototype.setData = function (geoJSON) {
@@ -65,7 +60,6 @@ ol.Playback.prototype.addData = function (geoJSON, ms) {
     if (!geoJSON) {
         return;
     }
-
     if (geoJSON instanceof Array) {
         for (var i = 0, len = geoJSON.length; i < len; i++) {
             this._trackController.addTrack(new ol.Playback.Track(geoJSON[i], this.options), ms);
@@ -79,9 +73,6 @@ ol.Playback.prototype.addData = function (geoJSON, ms) {
             this._trackController.addTrack(new ol.Playback.Track(geoJSON, this.options), ms);
         }
     }
-
-    //this._map.fire('playback:set:data');
-
     if (this.options.tracksLayer) {
         var geojsonformat=new ol.format.GeoJSON();
         var geojsonRoot = {
@@ -108,14 +99,7 @@ ol.Playback.prototype.addData = function (geoJSON, ms) {
                 feature.setStyle(style);
             }
         });
-
-        TracksLayer.getSource().addFeatures(features);
-        this._tracksLayer=TracksLayer;
-        if(!hasLayerInMap(TracksLayer))
-            this._map.addLayer(TracksLayer);
-        if(!hasLayerInMap(MarkerLayer))
-            this._map.addLayer(MarkerLayer);
-
+        this._trackLayer.trackSource.addFeatures(features);
     }
 };
 
@@ -130,8 +114,5 @@ ol.Playback.prototype.destroy= function() {
     if (this.dateControl) {
         this._map.removeControl(this.dateControl);
     }
-    if(hasLayerInMap(TracksLayer))
-        this._map.removeLayer(TracksLayer);
-    if(hasLayerInMap(MarkerLayer))
-        this._map.removeLayer(MarkerLayer);
+    this._trackLayer.destoryLayer();
 }

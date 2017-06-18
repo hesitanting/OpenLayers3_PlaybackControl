@@ -1,4 +1,4 @@
-
+ol.Playback = ol.Playback || {};
 DateControl = function(opt_options) {
     this.options= {
         position : 'bottomleft',

@@ -1,11 +1,8 @@
 ol.Playback = ol.Playback || {};
-
 ol.Playback.Util = {
-
     DateStr: function(time) {
       return new Date(time).toDateString();
     },
-
     TimeStr: function(time) {
       var d = new Date(time);
       var h = d.getHours();

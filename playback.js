@@ -42,9 +42,6 @@ function init(){
     // =====================================================
     // =============== Playback ============================
     // =====================================================
-
-    // Add data
-    //playback.addData(blueMountain);
     var playback=new ol.Playback(map, demoTracks,null);
     var control=new Example2_Control({
         playback:playback
