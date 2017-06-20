@@ -3,7 +3,6 @@ ol.Playback.TrackController = function (map, tracks, options) {
     this.options = options || {};
 
     this._map = map;
-
     this._tracks = [];
     // initialize tick points
     this.setTracks(tracks);
@@ -13,7 +12,6 @@ ol.Playback.TrackController.prototype.clearTracks=function() {
     while (this._tracks.length > 0) {
         var track = this._tracks.pop();
     }
-    //markerSource.clear();
 }
 
 ol.Playback.TrackController.prototype.setTracks = function (tracks) {

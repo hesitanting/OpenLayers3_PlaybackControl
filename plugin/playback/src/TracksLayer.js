@@ -1,6 +1,7 @@
 ol.Playback = ol.Playback || {};
 ol.Playback.TrackLayer=function (options) {
     this._map=options.map;
+    this.projCode=this._map.getView().getProjection().getCode();
     this._popup=options.popup;
     this.trackSource=new ol.source.Vector();
     this._trackStyle=function(feature,res) {
@@ -64,12 +65,15 @@ ol.Playback.TrackLayer=function (options) {
         if(feature==undefined)
             return;
         var coor=feature.getGeometry().getCoordinates();
-        var coor1=ol.proj.toLonLat(coor);
+        var coor1;
+        if(self.projCode=='EPSG:3857')
+            coor1=ol.proj.toLonLat(coor);
+        else
+            coor1=coor;
         var content=`<p>经纬度：${coor1[0].toFixed(4)} ${coor1[1].toFixed(4)}</p></br>
         <p>角度：${feature.get('heading').toFixed(4)}</p></br>
         <p>时间：${new Date(parseInt(feature.get('time'))).toLocaleString().replace(/:\d{1,2}$/,' ')}</p>`;
         self._popup.show(feature.getId(),coor,content);
-        //trackpopup.show(feature.getId(),coor,content);
     });
 }
 ol.Playback.TrackLayer.prototype.createLayer=function(){

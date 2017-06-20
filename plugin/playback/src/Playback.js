@@ -14,11 +14,13 @@ ol.Playback = function (map, geoJSON, callback, options) {
         //clickCallback:fun
     };
     this._map=map;
+    this.projCode=this._map.getView().getProjection().getCode();
     this._popup=new ol.Playback.PoPup({map:map});
     this._trackLayer=new ol.Playback.TrackLayer({map:this._map,popup:this._popup});
     this.options.trackLayer=this._trackLayer;
     this._trackController = new ol.Playback.TrackController(map, null, this.options);
     this._trackLayer.createLayer();//创建地图所需对象
+    this.options.projCode=this.projCode;
     Clock.call(this,this._trackController,callback,this.options);
     this.setData(geoJSON);//设置gps数据
 
@@ -37,52 +39,6 @@ ol.Playback = function (map, geoJSON, callback, options) {
     }
 
 };
-
-ol.Playback = ol.Playback || {};
-ol.Playback.PoPup = function(options) {
-    this._trackid;
-    this._map=options.map;
-    var popupElement = document.createElement('div');
-    popupElement.className = 'ol-popup';
-    this.popupCloseElement = document.createElement('a');
-    this.popupCloseElement.href = '#';
-    this.popupCloseElement.className = 'ol-popup-closer';
-    this.content = document.createElement('div');
-    popupElement.appendChild(this.popupCloseElement);
-    popupElement.appendChild(this.content);
-    this._map.getTargetElement().appendChild(popupElement);
-    this.popup = new ol.Overlay(({
-        element:popupElement,
-        autoPan: true,
-        autoPanAnimation: {
-            duration: 250
-        }
-    }));
-    var self=this;
-    this.popupCloseElement.onclick = function(){
-        self._trackid=undefined;
-        self.popup.setPosition(undefined);
-        this.blur();
-        return false;
-    }
-    this._map.addOverlay(this.popup);
-}
-ol.Playback.PoPup.prototype.getTrackId=function(){
-    return this._trackid;
-}
-ol.Playback.PoPup.prototype.show=function(id,coor,content){
-    this._trackid=id;
-    this.content.innerHTML = content;
-    this.popup.setPosition(coor);
-}
-ol.Playback.PoPup.prototype.move=function(id,coor,content){
-    if(id!=this._trackid)
-        return;
-    this.content.innerHTML = content;
-    this.popup.setPosition(coor);
-}
-
-ol.Playback.prototype=new Clock();
 
 ol.Playback.prototype.clearData = function(){
     this._trackController.clearTracks();
@@ -124,9 +80,10 @@ ol.Playback.prototype.addData = function (geoJSON, ms) {
             features : geoJSON
         };
         var features=geojsonformat.readFeatures(geojsonRoot);
-        //4326要转3857
+        var projCode=this.projCode;
         features.forEach(function(feature,index){
-            feature.setGeometry(feature.getGeometry().transform('EPSG:4326','EPSG:3857'));
+            if(projCode== 'EPSG:3857')
+                feature.setGeometry(feature.getGeometry().transform('EPSG:4326','EPSG:3857'));
             var options=feature.get('path_options');
             var color;
             if(options!==undefined&&options.color!==undefined)

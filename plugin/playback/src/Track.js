@@ -1,5 +1,6 @@
 ol.Playback.Track = function(geoJSON, options) {
     this.options = options || {};
+    this._projCode=options.projCode;//坐标系
     var tickLen = options.tickLen || 250;
     this._staleTime = options.staleTime || 60 * 60 * 1000;
     this._fadeMarkersWhenStale = options.fadeMarkersWhenStale || false;
@@ -268,7 +269,8 @@ ol.Playback.Track.prototype.setMarker = function(timestamp, options){
         heading=this.courseAtTime(this._startTime);
     }
     if (lngLat) {
-        lngLat=ol.proj.fromLonLat(lngLat);
+        if(this._projCode=='EPSG:3857')
+            lngLat=ol.proj.fromLonLat(lngLat);
         this.firstCoor=lngLat;
         this._marker=new ol.Feature({
             heading:heading,
@@ -288,14 +290,14 @@ ol.Playback.Track.prototype.setMarker = function(timestamp, options){
 ol.Playback.Track.prototype.moveMarker = function(latLng, transitionTime,timestamp) {
     var heading=this.courseAtTime(timestamp);
     if (this._marker&&latLng) {
-        latLng=ol.proj.fromLonLat(latLng);
+        if(this._projCode=='EPSG:3857')
+            latLng=ol.proj.fromLonLat(latLng);
         this._marker.set('heading',heading);
         this._marker.set('time',timestamp);
         this._marker.setGeometry(new ol.geom.Point(latLng));
         if(this.trackline===undefined){
             this.trackline=new ol.Feature({ color:this._color});
             this.trackline.setGeometry(new ol.geom.LineString([this.firstCoor,latLng]));
-            //trackSource.addFeature(this.trackline);
             this._trackLayer.trackSource.addFeature(this.trackline);
         }
         else
@@ -308,7 +310,11 @@ ol.Playback.Track.prototype.moveMarker = function(latLng, transitionTime,timesta
         if(this._marker.getId()==_trackid){
             var feature=this._marker;
             var coor=feature.getGeometry().getCoordinates();
-            var coor1=ol.proj.toLonLat(coor);
+            var coor1;
+            if(this._projCode=='EPSG:3857')
+                coor1=ol.proj.toLonLat(coor);
+            else
+                coor1=coor;
             var content=`<p>经纬度：${coor1[0].toFixed(4)} ${coor1[1].toFixed(4)}</p></br>
             <p>角度：${feature.get('heading').toFixed(4)}</p></br>
             <p>时间：${new Date(parseInt(feature.get('time'))).toLocaleString().replace(/:\d{1,2}$/,' ')}</p>`;

@@ -233,11 +233,13 @@ ol.Playback = function (map, geoJSON, callback, options) {
         //clickCallback:fun
     };
     this._map=map;
+    this.projCode=this._map.getView().getProjection().getCode();
     this._popup=new ol.Playback.PoPup({map:map});
     this._trackLayer=new ol.Playback.TrackLayer({map:this._map,popup:this._popup});
     this.options.trackLayer=this._trackLayer;
     this._trackController = new ol.Playback.TrackController(map, null, this.options);
     this._trackLayer.createLayer();//创建地图所需对象
+    this.options.projCode=this.projCode;
     Clock.call(this,this._trackController,callback,this.options);
     this.setData(geoJSON);//设置gps数据
 
@@ -256,9 +258,7 @@ ol.Playback = function (map, geoJSON, callback, options) {
     }
 
 };
-
 ol.Playback.prototype=new Clock();
-
 ol.Playback.prototype.clearData = function(){
     this._trackController.clearTracks();
     this._trackLayer.trackSource.clear();
@@ -299,9 +299,11 @@ ol.Playback.prototype.addData = function (geoJSON, ms) {
             features : geoJSON
         };
         var features=geojsonformat.readFeatures(geojsonRoot);
+        var projCode=this.projCode;
         //4326要转3857
         features.forEach(function(feature,index){
-            feature.setGeometry(feature.getGeometry().transform('EPSG:4326','EPSG:3857'));
+            if(projCode== 'EPSG:3857')
+                feature.setGeometry(feature.getGeometry().transform('EPSG:4326','EPSG:3857'));
             var options=feature.get('path_options');
             var color;
             if(options!==undefined&&options.color!==undefined)
@@ -336,7 +338,6 @@ ol.Playback.prototype.destroy= function() {
     this._trackLayer.destoryLayer();
 }
 
-ol.Playback = ol.Playback || {};
 ol.Playback.PoPup = function(options) {
     this._trackid;
     this._map=options.map;
@@ -382,6 +383,7 @@ ol.Playback.PoPup.prototype.move=function(id,coor,content){
 
 ol.Playback.Track = function(geoJSON, options) {
     this.options = options || {};
+    this._projCode=options.projCode;//坐标系
     var tickLen = options.tickLen || 250;
     this._staleTime = options.staleTime || 60 * 60 * 1000;
     this._fadeMarkersWhenStale = options.fadeMarkersWhenStale || false;
@@ -650,7 +652,8 @@ ol.Playback.Track.prototype.setMarker = function(timestamp, options){
         heading=this.courseAtTime(this._startTime);
     }
     if (lngLat) {
-        lngLat=ol.proj.fromLonLat(lngLat);
+        if(this._projCode=='EPSG:3857')
+            lngLat=ol.proj.fromLonLat(lngLat);
         this.firstCoor=lngLat;
         this._marker=new ol.Feature({
             heading:heading,
@@ -670,14 +673,14 @@ ol.Playback.Track.prototype.setMarker = function(timestamp, options){
 ol.Playback.Track.prototype.moveMarker = function(latLng, transitionTime,timestamp) {
     var heading=this.courseAtTime(timestamp);
     if (this._marker&&latLng) {
-        latLng=ol.proj.fromLonLat(latLng);
+        if(this._projCode=='EPSG:3857')
+            latLng=ol.proj.fromLonLat(latLng);
         this._marker.set('heading',heading);
         this._marker.set('time',timestamp);
         this._marker.setGeometry(new ol.geom.Point(latLng));
         if(this.trackline===undefined){
             this.trackline=new ol.Feature({ color:this._color});
             this.trackline.setGeometry(new ol.geom.LineString([this.firstCoor,latLng]));
-            //trackSource.addFeature(this.trackline);
             this._trackLayer.trackSource.addFeature(this.trackline);
         }
         else
@@ -690,20 +693,24 @@ ol.Playback.Track.prototype.moveMarker = function(latLng, transitionTime,timesta
         if(this._marker.getId()==_trackid){
             var feature=this._marker;
             var coor=feature.getGeometry().getCoordinates();
-            var coor1=ol.proj.toLonLat(coor);
+            var coor1;
+            if(this._projCode=='EPSG:3857')
+                coor1=ol.proj.toLonLat(coor);
+            else
+                coor1=coor;
             var content=`<p>经纬度：${coor1[0].toFixed(4)} ${coor1[1].toFixed(4)}</p></br>
             <p>角度：${feature.get('heading').toFixed(4)}</p></br>
             <p>时间：${new Date(parseInt(feature.get('time'))).toLocaleString().replace(/:\d{1,2}$/,' ')}</p>`;
-            this._trackLayer.getPopup().move(feature.getId(),coor,content);
-        }
-    }
+this._trackLayer.getPopup().move(feature.getId(),coor,content);
+}
+}
 };
 
 ol.Playback.Track.prototype.getMarker = function() {
     return this._marker;
 };
 
-ol.Playback = ol.Playback || {};
+
 ol.Playback.TrackController = function (map, tracks, options) {
     this.options = options || {};
 
@@ -800,6 +807,7 @@ ol.Playback.TrackController.prototype.getTracks = function () {
 ol.Playback = ol.Playback || {};
 ol.Playback.TrackLayer=function (options) {
         this._map=options.map;
+        this.projCode=this._map.getView().getProjection().getCode();
         this._popup=options.popup;
         this.trackSource=new ol.source.Vector();
         this._trackStyle=function(feature,res) {
@@ -863,13 +871,16 @@ ol.Playback.TrackLayer=function (options) {
             if(feature==undefined)
                 return;
             var coor=feature.getGeometry().getCoordinates();
-            var coor1=ol.proj.toLonLat(coor);
+            var coor1;
+            if(self.projCode=='EPSG:3857')
+                coor1=ol.proj.toLonLat(coor);
+            else
+                coor1=coor;
             var content=`<p>经纬度：${coor1[0].toFixed(4)} ${coor1[1].toFixed(4)}</p></br>
             <p>角度：${feature.get('heading').toFixed(4)}</p></br>
             <p>时间：${new Date(parseInt(feature.get('time'))).toLocaleString().replace(/:\d{1,2}$/,' ')}</p>`;
-self._popup.show(feature.getId(),coor,content);
-//trackpopup.show(feature.getId(),coor,content);
-});
+            self._popup.show(feature.getId(),coor,content);
+        });
 }
 ol.Playback.TrackLayer.prototype.createLayer=function(){
     this._map.addLayer(this.tracksLayer);
@@ -884,7 +895,8 @@ ol.Playback.TrackLayer.prototype.destoryLayer=function(){
 ol.Playback.TrackLayer.prototype.getPopup=function() {
     return this._popup;
 }
-ol.Playback = ol.Playback || {};
+
+
 ol.Playback.Util = {
     DateStr: function(time) {
         return new Date(time).toDateString();
